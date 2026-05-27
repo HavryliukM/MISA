@@ -129,11 +129,11 @@ Ak nemáte pripojené fyzické ESP32, môžete spustiť priložený simulátor, 
 
 ---
 
-## Ako sprístupniť Dashboard Verejne (Online z celého internetu)
+## Ako sprístupniť Dashboard Verejne
 
-Ak chcete, aby bol váš dashboard a API prístupné komukoľvek z internetu (alebo aby ESP32 mohlo posielať dáta na váš lokálny počítač mimo domácej siete), môžete použiť jeden z nasledovných nástrojov:
+Aby bol dashboard a API prístupné komukoľvek z internetu (alebo aby ESP32 mohlo posielať dáta na lokálny počítač mimo domácej siete), môžete použiť:
 
-### Možnosť A: Cloudflare Tunnel (Odporúčané, zadarmo a bez registrácie)
+### Cloudflare Tunnel
 1. Stiahnite si nástroj `cloudflared`.
 2. Spustite tunel nasmerovaný na váš lokálny port 5001:
    ```bash
@@ -141,14 +141,6 @@ Ak chcete, aby bol váš dashboard a API prístupné komukoľvek z internetu (al
    ```
 3. Z terminálu skopírujte vygenerovanú HTTPS adresu (napr. `https://random-subdomain.trycloudflare.com`).
 4. Túto adresu nastavte v ESP32 firmware (`main.ino`) ako `serverUrl` (s koncovkou `/api/measurements`).
-
-### Možnosť B: Ngrok
-1. Stiahnite si a nainštalujte `ngrok`.
-2. Spustite nasmerovanie portu:
-   ```bash
-   ngrok http 5001
-   ```
-3. Skopírujte vygenerovanú verejnú adresu a nastavte ju vo vašom ESP32 kóde.
 
 ---
 
