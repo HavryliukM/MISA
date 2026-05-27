@@ -25,7 +25,6 @@ Projekt je rozdelený na tri logické celky: firmvér, server a dokumentáciu.
 
 ```text
 MISA/
-├── .venv/                  # Lokálne Python virtuálne prostredie
 ├── docs/                   # Obrázky, schémy zapojenia a diagramy
 ├── firmware/
 │   └── main/
