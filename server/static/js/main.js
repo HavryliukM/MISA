@@ -1,20 +1,28 @@
 'use strict';
 
-const API_LATEST = '/api/latest';
 const API_HISTORY = '/api/history';
 
-const els = {
-    statusDot:   document.getElementById('status-dot'),
-    statusText:  document.getElementById('status-text'),
-    historyBody: document.getElementById('history-body'),
-    lastUpdate:  document.getElementById('last-update'),
-    tempValue:   document.getElementById('temp-value'),
-    humValue:    document.getElementById('hum-value'),
-    tempBar:     document.getElementById('temp-bar'),
-    humBar:      document.getElementById('hum-bar'),
-};
+// DOM refs
+const statusDot  = document.getElementById('status-dot');
+const statusText = document.getElementById('status-text');
+const lastUpdate = document.getElementById('last-update');
+const histBody   = document.getElementById('history-body');
 
-// ── Chart.js ────────────────────────────────────────────────────────────────
+// ── SVG Arc Gauge ────────────────────────────────────────────────────────────
+// 270° arc on circle r=80 → arc length ≈ 377, total circumference ≈ 503
+const ARC = 377;
+const CIRC = 503;
+
+function setGauge(arcId, valId, badgeId, value, min, max, unit) {
+    const pct    = Math.max(0, Math.min(1, (value - min) / (max - min)));
+    const filled = ARC * pct;
+    const gap    = CIRC - filled;
+    document.getElementById(arcId).setAttribute('stroke-dasharray', `${filled.toFixed(1)} ${gap.toFixed(1)}`);
+    document.getElementById(valId).textContent = value.toFixed(1);
+    document.getElementById(badgeId).textContent = `${value.toFixed(1)} ${unit}`;
+}
+
+// ── Chart.js (dual Y axes) ───────────────────────────────────────────────────
 const chart = new Chart(document.getElementById('main-chart').getContext('2d'), {
     type: 'line',
     data: {
@@ -26,9 +34,10 @@ const chart = new Chart(document.getElementById('main-chart').getContext('2d'), 
                 borderColor: '#f97316',
                 backgroundColor: 'rgba(249,115,22,0.08)',
                 fill: true,
-                tension: 0.4,
+                tension: 0.35,
                 pointRadius: 0,
                 borderWidth: 2,
+                yAxisID: 'yTemp',
             },
             {
                 label: 'Vlhkosť (%)',
@@ -36,9 +45,10 @@ const chart = new Chart(document.getElementById('main-chart').getContext('2d'), 
                 borderColor: '#38bdf8',
                 backgroundColor: 'rgba(56,189,248,0.08)',
                 fill: true,
-                tension: 0.4,
+                tension: 0.35,
                 pointRadius: 0,
                 borderWidth: 2,
+                yAxisID: 'yHum',
             },
         ],
     },
@@ -51,102 +61,112 @@ const chart = new Chart(document.getElementById('main-chart').getContext('2d'), 
             legend: {
                 labels: {
                     color: '#94a3b8',
-                    font: { family: "'Outfit', sans-serif", size: 13 },
-                    boxWidth: 12,
-                    boxHeight: 12,
+                    font: { family: "'Outfit', sans-serif", size: 12 },
+                    boxWidth: 10,
+                    boxHeight: 10,
                     usePointStyle: true,
+                    pointStyle: 'circle',
                 }
             },
             tooltip: {
-                backgroundColor: 'rgba(15,23,42,0.95)',
+                backgroundColor: 'rgba(10,15,28,0.96)',
                 borderColor: 'rgba(255,255,255,0.08)',
                 borderWidth: 1,
-                titleColor: '#94a3b8',
-                bodyColor: '#f8fafc',
+                titleColor: '#64748b',
+                bodyColor: '#f1f5f9',
                 padding: 12,
                 cornerRadius: 10,
+                callbacks: {
+                    label: ctx => {
+                        const unit = ctx.datasetIndex === 0 ? ' °C' : ' %';
+                        return ` ${ctx.dataset.label.split(' ')[0]}: ${ctx.parsed.y.toFixed(1)}${unit}`;
+                    }
+                }
             }
         },
         scales: {
             x: {
                 grid: { color: 'rgba(255,255,255,0.04)' },
-                ticks: { color: '#64748b', maxTicksLimit: 8, font: { family: "'Outfit', sans-serif" } },
+                ticks: {
+                    color: '#475569',
+                    maxTicksLimit: 8,
+                    font: { family: "'Outfit', sans-serif", size: 11 },
+                },
+                border: { color: 'rgba(255,255,255,0.06)' },
             },
-            y: {
+            // Left Y axis — Temperature
+            yTemp: {
+                position: 'left',
                 grid: { color: 'rgba(255,255,255,0.04)' },
-                ticks: { color: '#64748b', font: { family: "'Outfit', sans-serif" } },
-                min: 0,
-                max: 100,
+                border: { color: 'rgba(255,255,255,0.06)' },
+                ticks: {
+                    color: '#f97316',
+                    font: { family: "'Outfit', sans-serif", size: 11 },
+                    callback: v => v.toFixed(0) + ' °C',
+                },
+            },
+            // Right Y axis — Humidity
+            yHum: {
+                position: 'right',
+                grid: { drawOnChartArea: false },
+                border: { color: 'rgba(255,255,255,0.06)' },
+                ticks: {
+                    color: '#38bdf8',
+                    font: { family: "'Outfit', sans-serif", size: 11 },
+                    callback: v => v.toFixed(0) + ' %',
+                },
             },
         },
-    }
+    },
 });
 
-// ── Metric card updaters ─────────────────────────────────────────────────────
-function updateMetricCards(latestData) {
-    if (!latestData) return;
-
-    const temp = latestData.temp;
-    const hum  = latestData.hum;
-
-    // Values
-    els.tempValue.textContent = temp.toFixed(1);
-    els.humValue.textContent  = hum.toFixed(1);
-
-    // Progress bars: temp mapped to -20..60 range, hum to 0..100
-    const tempPct = Math.min(100, Math.max(0, ((temp + 20) / 80) * 100));
-    const humPct  = Math.min(100, Math.max(0, hum));
-    els.tempBar.style.width = tempPct + '%';
-    els.humBar.style.width  = humPct  + '%';
-
-    // Timestamp
-    els.lastUpdate.textContent = latestData.timestamp;
-}
-
-// ── Chart & table updaters ───────────────────────────────────────────────────
-function updateChart(dataArray) {
-    chart.data.labels            = dataArray.map(d => d.timestamp.split(' ')[1]);
-    chart.data.datasets[0].data  = dataArray.map(d => d.temp);
-    chart.data.datasets[1].data  = dataArray.map(d => d.hum);
+// ── Updaters ─────────────────────────────────────────────────────────────────
+function updateChart(data) {
+    chart.data.labels           = data.map(d => d.timestamp.split(' ')[1]);
+    chart.data.datasets[0].data = data.map(d => d.temp);
+    chart.data.datasets[1].data = data.map(d => d.hum);
     chart.update('none');
 }
 
-function updateTable(dataArray) {
-    els.historyBody.innerHTML = '';
-    const reversed = [...dataArray].reverse();
-    reversed.forEach(d => {
-        const tr = els.historyBody.insertRow(-1);
+function updateTable(data) {
+    histBody.innerHTML = '';
+    [...data].reverse().forEach(d => {
+        const tr = histBody.insertRow(-1);
         tr.innerHTML = `<td>${d.timestamp}</td><td>${d.temp.toFixed(1)}</td><td>${d.hum.toFixed(1)}</td>`;
     });
 }
 
-// ── Status ───────────────────────────────────────────────────────────────────
-function setStatus(connected) {
-    if (connected) {
-        els.statusDot.className  = 'dot dot--online';
-        els.statusText.textContent = 'Pripojené — Živé dáta';
-    } else {
-        els.statusDot.className  = 'dot dot--offline';
-        els.statusText.textContent = 'Odpojené (Chyba API)';
-    }
+function updateGauges(d) {
+    setGauge('temp-arc', 'temp-val', 'temp-badge', d.temp, 0,   50,  '°C');
+    setGauge('hum-arc',  'hum-val',  'hum-badge',  d.hum,  0,  100,  '%');
+    lastUpdate.textContent = d.timestamp;
 }
 
-// ── Fetch ────────────────────────────────────────────────────────────────────
+function setStatus(ok) {
+    statusDot.className   = ok ? 'dot dot--online' : 'dot dot--offline';
+    statusText.textContent = ok ? 'Pripojené — Živé dáta' : 'Odpojené (Chyba API)';
+}
+
+// ── Fetch ─────────────────────────────────────────────────────────────────────
 async function fetchAll() {
     try {
-        const res = await fetch(API_HISTORY);
-        if (!res.ok) throw new Error('API failed');
+        const res  = await fetch(API_HISTORY);
+        if (!res.ok) throw new Error();
         const data = await res.json();
-        updateChart(data);
-        updateTable(data);
-        if (data.length > 0) updateMetricCards(data[data.length - 1]);
+        
+        // Filter out any corrupted entries (e.g. DHT failures resulting in zero/near-zero values)
+        const cleanData = data.filter(d => d.temp > 0.5 && d.hum > 1.0);
+        
+        if (cleanData.length > 0) {
+            updateGauges(cleanData[cleanData.length - 1]);
+            updateChart(cleanData);
+            updateTable(cleanData);
+        }
         setStatus(true);
-    } catch (e) {
-        console.error(e);
+    } catch {
         setStatus(false);
     }
 }
 
-// ── Init ─────────────────────────────────────────────────────────────────────
 fetchAll();
-setInterval(fetchAll, 5000);
+setInterval(fetchAll, 30000);

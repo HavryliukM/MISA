@@ -3,105 +3,167 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="MISA - Monitorovanie teploty a vlhkosti pomocou ESP32 a DHT11">
+    <meta name="description" content="MISA Dashboard – ESP32 + DHT11 monitorovanie teploty a vlhkosti">
     <title>MISA Dashboard</title>
-    <link rel="stylesheet" href="{{ url_for('static', path='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', path='css/style.css') }}?v=7">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
 <div class="app">
 
+    <!-- HEADER -->
     <header>
-        <div class="header-left">
+        <div>
             <h1>MISA &mdash; Monitorovanie Prostredia</h1>
-            <p class="header-sub">ESP32 + DHT11 &bull; Live IoT Dashboard</p>
+            <p class="header-sub">Node32s &bull; DHT11 &bull; Live IoT Dashboard</p>
         </div>
         <div class="status-badge">
             <span id="status-dot" class="dot dot--offline"></span>
-            <span id="status-text">Pripája sa k API...</span>
+            <span id="status-text">Pripája sa...</span>
         </div>
     </header>
 
-    <main>
+    <!-- TOP ROW: Gauges + Info -->
+    <div class="top-row">
 
-        <!-- Metric Cards -->
-        <div class="metrics-row">
-
-            <div class="metric-card metric-card--temp">
-                <div class="metric-icon-wrap metric-icon-wrap--temp">
-                    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z"/>
-                    </svg>
-                </div>
-                <div class="metric-body">
-                    <div class="metric-label">Teplota</div>
-                    <div class="metric-number">
-                        <span id="temp-value">--</span>
-                        <span class="metric-unit">°C</span>
-                    </div>
-                    <div class="metric-bar-track"><div class="metric-bar metric-bar--temp" id="temp-bar"></div></div>
-                </div>
+        <!-- Temperature Gauge -->
+        <div class="gauge-card gauge-card--temp">
+            <div class="gc-label">Teplota</div>
+            <div class="gc-svg-wrap">
+                <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                        <linearGradient id="gTempGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stop-color="#c2410c"/>
+                            <stop offset="100%" stop-color="#fbbf24"/>
+                        </linearGradient>
+                        <filter id="glow-temp">
+                            <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+                            <feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>
+                        </filter>
+                    </defs>
+                    <!-- Track -->
+                    <circle cx="100" cy="100" r="80" fill="none"
+                        stroke="rgba(255,255,255,0.07)" stroke-width="14" stroke-linecap="round"
+                        stroke-dasharray="377 126" transform="rotate(135 100 100)"/>
+                    <!-- Fill arc -->
+                    <circle id="temp-arc" cx="100" cy="100" r="80" fill="none"
+                        stroke="url(#gTempGrad)" stroke-width="14" stroke-linecap="round"
+                        stroke-dasharray="0 503" transform="rotate(135 100 100)"
+                        filter="url(#glow-temp)"
+                        style="transition: stroke-dasharray 0.9s cubic-bezier(0.4,0,0.2,1)"/>
+                    <!-- Center value -->
+                    <text id="temp-val" x="100" y="95"
+                        text-anchor="middle" font-family="Outfit,sans-serif"
+                        font-size="46" font-weight="700" fill="#f1f5f9" letter-spacing="-2">--</text>
+                    <text x="100" y="118" text-anchor="middle"
+                        font-family="Outfit,sans-serif" font-size="15" font-weight="500" fill="#64748b">°C</text>
+                    <!-- Min / Max -->
+                    <text x="26" y="166" text-anchor="middle"
+                        font-family="Outfit,sans-serif" font-size="11" fill="#475569">0</text>
+                    <text x="174" y="166" text-anchor="middle"
+                        font-family="Outfit,sans-serif" font-size="11" fill="#475569">50</text>
+                </svg>
             </div>
-
-            <div class="metric-card metric-card--hum">
-                <div class="metric-icon-wrap metric-icon-wrap--hum">
-                    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/>
-                    </svg>
-                </div>
-                <div class="metric-body">
-                    <div class="metric-label">Vlhkosť</div>
-                    <div class="metric-number">
-                        <span id="hum-value">--</span>
-                        <span class="metric-unit">%</span>
-                    </div>
-                    <div class="metric-bar-track"><div class="metric-bar metric-bar--hum" id="hum-bar"></div></div>
-                </div>
-            </div>
-
-            <div class="metric-card metric-card--info">
-                <div class="metric-icon-wrap metric-icon-wrap--info">
-                    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
-                    </svg>
-                </div>
-                <div class="metric-body">
-                    <div class="metric-label">Posledná aktualizácia</div>
-                    <div class="metric-timestamp" id="last-update">--</div>
-                    <div class="metric-sub">DHT11 &bull; GPIO 4 &bull; ESP32 NodeMCU-32S</div>
-                </div>
-            </div>
-
+            <div class="gc-badge gc-badge--temp" id="temp-badge">---</div>
         </div>
 
-        <!-- Chart + Table -->
-        <div class="bottom-row">
-            <div class="card">
-                <div class="card-title">Historický Vývoj (Posledných 50 meraní)</div>
-                <div class="chart-wrap">
-                    <canvas id="main-chart"></canvas>
-                </div>
+        <!-- Humidity Gauge -->
+        <div class="gauge-card gauge-card--hum">
+            <div class="gc-label">Vlhkosť</div>
+            <div class="gc-svg-wrap">
+                <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                        <linearGradient id="gHumGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stop-color="#0369a1"/>
+                            <stop offset="100%" stop-color="#38bdf8"/>
+                        </linearGradient>
+                        <filter id="glow-hum">
+                            <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+                            <feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>
+                        </filter>
+                    </defs>
+                    <circle cx="100" cy="100" r="80" fill="none"
+                        stroke="rgba(255,255,255,0.07)" stroke-width="14" stroke-linecap="round"
+                        stroke-dasharray="377 126" transform="rotate(135 100 100)"/>
+                    <circle id="hum-arc" cx="100" cy="100" r="80" fill="none"
+                        stroke="url(#gHumGrad)" stroke-width="14" stroke-linecap="round"
+                        stroke-dasharray="0 503" transform="rotate(135 100 100)"
+                        filter="url(#glow-hum)"
+                        style="transition: stroke-dasharray 0.9s cubic-bezier(0.4,0,0.2,1)"/>
+                    <text id="hum-val" x="100" y="95"
+                        text-anchor="middle" font-family="Outfit,sans-serif"
+                        font-size="46" font-weight="700" fill="#f1f5f9" letter-spacing="-2">--</text>
+                    <text x="100" y="118" text-anchor="middle"
+                        font-family="Outfit,sans-serif" font-size="15" font-weight="500" fill="#64748b">%</text>
+                    <text x="26" y="166" text-anchor="middle"
+                        font-family="Outfit,sans-serif" font-size="11" fill="#475569">0</text>
+                    <text x="174" y="166" text-anchor="middle"
+                        font-family="Outfit,sans-serif" font-size="11" fill="#475569">100</text>
+                </svg>
             </div>
-            <div class="card">
-                <div class="card-title">Tabuľka Hodnôt</div>
-                <div class="table-wrap">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Čas</th>
-                                <th>Teplota&nbsp;(°C)</th>
-                                <th>Vlhkosť&nbsp;(%)</th>
-                            </tr>
-                        </thead>
-                        <tbody id="history-body"></tbody>
-                    </table>
+            <div class="gc-badge gc-badge--hum" id="hum-badge">---</div>
+        </div>
+
+        <!-- Info Card -->
+        <div class="info-card">
+            <div class="info-card-title">Informácie o systéme</div>
+            <div class="info-list">
+                <div class="info-item">
+                    <span class="info-key">Posledná aktualizácia</span>
+                    <span class="info-val" id="last-update">--</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-key">Senzor</span>
+                    <span class="info-val">DHT11 &bull; GPIO 4</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-key">Mikrokontrolér</span>
+                    <span class="info-val">Node32s</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-key">Perióda merania</span>
+                    <span class="info-val">30 sekúnd</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-key">Komunikácia</span>
+                    <span class="info-val">WiFi → HTTP POST</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-key">Backend</span>
+                    <span class="info-val">FastAPI + SQLite</span>
                 </div>
             </div>
         </div>
 
-    </main>
+    </div>
+
+    <!-- CHART -->
+    <div class="card">
+        <div class="card-title">Historický Vývoj (Posledných 50 meraní)</div>
+        <div class="chart-wrap">
+            <canvas id="main-chart"></canvas>
+        </div>
+    </div>
+
+    <!-- TABLE -->
+    <div class="card">
+        <div class="card-title">Tabuľka Hodnôt</div>
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Čas</th>
+                        <th>Teplota (°C)</th>
+                        <th>Vlhkosť (%)</th>
+                    </tr>
+                </thead>
+                <tbody id="history-body"></tbody>
+            </table>
+        </div>
+    </div>
+
 </div>
-<script src="{{ url_for('static', path='js/main.js') }}?v=6.0"></script>
+<script src="{{ url_for('static', path='js/main.js') }}?v=7"></script>
 </body>
 </html>

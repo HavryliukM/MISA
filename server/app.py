@@ -36,6 +36,13 @@ async def get_latest():
 
 @app.post("/api/measurements")
 async def add_measurement(measurement: MeasurementIn):
+    # Reject corrupted sensor readings (e.g. DHT sensor failures resulting in exactly 0.0 or near-zero readings)
+    if measurement.temp <= 0.5 or measurement.hum <= 1.0:
+        return JSONResponse(
+            status_code=400,
+            content={"status": "error", "message": "Invalid or corrupted sensor reading"}
+        )
+    
     db = SessionLocal()
     new_reading = SensorReading(temp=measurement.temp, hum=measurement.hum)
     db.add(new_reading)

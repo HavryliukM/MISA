@@ -16,7 +16,7 @@ const char* serverUrl = "http://192.168.100.56:5001/api/measurements";
 
 // --- Nastavenia merania ---
 unsigned long previousMillis = 0;
-const long interval = 5000; // Odosielanie každých 5 sekúnd
+const long interval = 30000; // Odosielanie každých 30 sekúnd
 
 DHT dht(DHTPIN, DHTTYPE);
 
