@@ -3,11 +3,70 @@
 ## Účel Projektu a Merané Veličiny
 Tento projekt predstavuje ucelený systém pre vzdialené monitorovanie fyzikálnych veličín - konkrétne **teploty** a **vlhkosti**. Cieľom je kontinuálny zber týchto dát pomocou hardvérového snímača, ich bezdrôtový prenos na server a okamžitá vizualizácia pomocou moderného webového dashboardu. Systém slúži ako demonštrácia kompletného IoT (Internet of Things) reťazca od zabudovaného zariadenia až po prezentačnú webovú vrstvu.
 
-## Arc    Sensor[DHT11 - Senzor teploty a vlhkosti] -->|1-Wire digitálny signál| MCU[Node32s]
+## Architektúra Systému
+
+Tento projekt využíva 3-vrstvovú architektúru (Senzor/Mikrokontrolér → Backend Server → Používateľský Dashboard):
+
+```mermaid
+graph TD
+    Sensor[DHT11 - Senzor teploty a vlhkosti] -->|1-Wire digitálny signál| MCU[Node32s]
     MCU -->|WiFi / HTTP POST JSON| Server[FastAPI Backend Server]
     Server -->|Ukladanie dát| DB[(SQLite Databáza)]
     Client[Webový Prehliadač / Dashboard] <-->|HTTP GET / AJAX Fetch| Server
 ```
+
+Grafické zobrazenie architektúry a fyzického zapojenia nájdete v priečinku `docs/`.
+
+---
+
+## Štruktúra Projektu
+
+Projekt je rozdelený na tri logické celky: firmvér, server a dokumentáciu.
+
+```text
+MISA/
+├── .venv/                  # Lokálne Python virtuálne prostredie
+├── docs/                   # Obrázky, schémy zapojenia a diagramy
+├── firmware/
+│   └── main/
+│       └── main.ino        # C++ kód pre Node32s (ESP32) a DHT11
+├── server/
+│   ├── static/             # Statické súbory pre webový dashboard
+│   │   ├── css/
+│   │   │   └── style.css   # Moderný CSS štýl s podporou responzivity a tmavého režimu
+│   │   └── js/
+│   │       └── main.js     # Logika dashboardu: Chart.js, animované ciferníky a periodické dopyty
+│   ├── templates/
+│   │   └── index.html      # HTML šablóna pre hlavnú stránku dashboardu
+│   ├── app.py              # FastAPI server (Python backend a REST API)
+│   ├── database.db         # Lokálna SQLite databáza pre ukladanie meraní (generuje sa sama)
+│   ├── models.py           # ORM definícia tabuliek (SQLAlchemy modely)
+│   └── simulate.py         # Testovací simulátor odosielania dát na server
+└── README.md               # Táto dokumentácia
+```
+
+---
+
+## Použité Knižnice a Technológie
+
+### 1. Hardvér a Mikrokontrolér (firmware)
+* **Arduino WiFi.h & HTTPClient.h** – pre sieťovú komunikáciu a odosielanie JSON dát cez HTTP POST.
+* **Adafruit DHT Sensor Library** – na čítanie hodnôt teploty a vlhkosti zo senzora DHT11.
+* **Adafruit Unified Sensor** – podporná knižnica pre správne fungovanie DHT senzorov.
+
+### 2. Backend a Databáza (server)
+* **FastAPI** – moderný, rýchly webový framework pre Python.
+* **Uvicorn** – rýchly ASGI webový server pre beh FastAPI aplikácie.
+* **SQLAlchemy** – moderné Python ORM na komunikáciu s SQLite databázou bez písania SQL dopytov.
+* **Pydantic** – pre dátovú validáciu prichádzajúcich HTTP JSON dát z Node32s.
+* **Jinja2** – šablónovací systém pre renderovanie HTML dashboardu.
+
+### 3. Frontend a Vizualizácia (dashboard)
+* **Chart.js (v4.4.0)** – interaktívny JavaScript graf zobrazujúci historický vývoj teplôt a vlhkosti na dvoch nezávislých Y osiach.
+* **Google Fonts (Outfit)** – moderná a elegantná bezpätková typografia.
+* **Custom SVG Gauges** – animované ciferníky na hlavnej obrazovke navrhnuté pomocou čistého SVG a CSS transformácií pre maximálnu ostrosť na všetkých displejoch.
+
+---
 
 ## Použitý Hardvér
 1. **Mikrokontrolér:** Node32s (chip ESP32-D0WD-V3)
