@@ -7,21 +7,29 @@ Tento projekt predstavuje ucelený systém pre vzdialené monitorovanie fyzikál
 
 ```mermaid
 graph TD
-    Sensor[DHT22 - Senzor teploty a vlhkosti] -->|1-Wire digitálny signál| MCU[ESP32 Development Board]
+    Sensor[DHT11 - Senzor teploty a vlhkosti] -->|1-Wire digitálny signál| MCU[ESP32 NodeMCU-32S]
     MCU -->|WiFi / HTTP POST JSON| Server[FastAPI Backend Server]
     Server -->|Ukladanie dát| DB[(SQLite Databáza)]
     Client[Webový Prehliadač / Dashboard] <-->|HTTP GET / AJAX Fetch| Server
 ```
 
 ## Použitý Hardvér
-1. **Mikrokontrolér:** ESP32 (napr. NodeMCU-32S alebo WROOM-32)
-2. **Snímač:** DHT22 (Kategória A - Digitálny snímač)
-3. **Príslušenstvo:** Prepojovacie vodiče, Breadboard, Micro-USB kábel pre napájanie a programovanie.
+1. **Mikrokontrolér:** ESP32 NodeMCU-32S (chip ESP32-D0WD-V3)
+2. **Snímač:** DHT11 (Kategória A - Digitálny snímač teploty a vlhkosti, 3-pinový modul)
+3. **Príslušenstvo:** Prepojovacie vodiče (F-to-F), Micro-USB kábel pre napájanie a programovanie.
+
+### Schéma Zapojenia
+
+![Schéma zapojenia ESP32 a DHT11](docs/schema.png)
+
+### Architektúra Systému
+
+![Diagram architektúry systému](docs/architecture.png)
 
 ## Odôvodnenie Návrhových Rozhodnutí
 
 - **Mikrokontrolérová platforma (ESP32):** Zvolená bola platforma ESP32 pre jej natívnu podporu 2.4GHz WiFi sietí, čo napĺňa primárnu požiadavku R2 (bezdrôtový prenos). Na rozdiel od základných dosiek rodiny Arduino (Uno/Nano) nevyžaduje prídavné moduly pre sieťovú konektivitu a má dostatok výpočtového výkonu.
-- **Snímač (DHT22):** Digitálny snímač teploty a vlhkosti. Oproti verzii DHT11 poskytuje vyššiu presnosť a väčší rozsah merania. Komunikuje vlastným digitálnym protokolom (spĺňa Kategóriu A) a vyžaduje iba jeden dátový pin na mikrokontroléri.
+- **Snímač (DHT11):** Digitálny snímač teploty a vlhkosti. Komunikuje vlastným jednovodičovým digitálnym protokolom (spĺňa Kategóriu A) a vyžaduje iba jeden dátový pin (GPIO 4) na mikrokontroléri. 3-pinový modul má integrovaný pull-up rezistor, čo zjednodušuje zapojenie.
 - **Komunikačný protokol (HTTP REST):** Keďže systém odosiela dáta jednosmerne a periodicky z mikrokontroléra na server, použitie klasického HTTP POST dopytu s JSON obsahom je najjednoduchšie, najstabilnejšie a bez nutnosti spravovať dodatočný MQTT broker či riešiť problémy s udržiavaním otvorených WebSocket spojení.
 - **Vizualizačná technológia (FastAPI + HTML/JS Dashboard):** Python framework FastAPI poskytuje extrémnu rýchlosť pri tvorbe REST API. Na strane klienta je použitý čistý HTML/JS s knižnicami Chart.js (pre vykreslenie historického grafu) a canvas-gauges (pre aktuálny stav), čo zaručuje plynulý chod aplikácie bez inštalácie masívnych frontendových frameworkov ako React/Angular. Dáta sa aktualizujú pravidelne pomocou `fetch()`.
 

@@ -3,20 +3,20 @@
 #include <DHT.h>
 
 // --- Nastavenia siete ---
-const char* ssid = "VAS_WIFI_NAZOV";
-const char* password = "VASE_WIFI_HESLO";
+const char* ssid = "soFISHticated";
+const char* password = "17.01-24.02";
 
 // --- Nastavenia servera ---
 // Adresa backendu (buď lokálna IP, alebo verejná ngrok adresa)
-const char* serverUrl = "http://192.168.1.X:5001/api/measurements"; 
+const char* serverUrl = "http://192.168.100.56:5001/api/measurements"; 
 
 // --- Nastavenia senzorov ---
-#define DHTPIN 4        // Zvoľte vhodný GPIO pin na ESP32 (napr. GPIO4)
-#define DHTTYPE DHT22   // DHT 22 (použité v Project11)
+#define DHTPIN 4     // Zvoľte vhodný GPIO pin na ESP32 (napr. GPIO4)
+#define DHTTYPE DHT11   // Zmena na DHT11 na základe hardvéru používateľa
 
 // --- Nastavenia merania ---
 unsigned long previousMillis = 0;
-const long interval = 30000; // Odosielanie každých 30 sekúnd
+const long interval = 5000; // Odosielanie každých 5 sekúnd
 
 DHT dht(DHTPIN, DHTTYPE);
 
