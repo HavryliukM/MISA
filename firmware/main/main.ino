@@ -8,7 +8,7 @@ const char* password = "17.01-24.02";
 
 // --- Nastavenia servera ---
 // Adresa backendu (buď lokálna IP, alebo verejná ngrok adresa)
-const char* serverUrl = "http://192.168.100.56:5001/api/measurements"; 
+const char* serverUrl = "https://disc-bob-casinos-academic.trycloudflare.com/api/measurements"; 
 
 // --- Nastavenia senzorov ---
 #define DHTPIN 4     // Zvoľte vhodný GPIO pin na ESP32 (napr. GPIO4)
