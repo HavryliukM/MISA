@@ -54,20 +54,20 @@ Mikrokontrolér odosiela dáta vo formáte štandardného JSON objektu pomocou P
 ![Schéma zapojenia ESP32 a DHT11](docs/schema.png)
 
 ![Diagram architektúry systému](docs/architecture.png)
-```
 
-### 1. Spustenie Backend Servera
+1. Spustenie Backend Servera
 
 **Prerekvizity:** Nainštalovaný Python 3.9+ na hostiteľskom stroji.
 
 1. Otvorte terminál v priečinku `server`.
 2. Vytvorte súbor `server/.env` podľa miestneho nastavenia. Minimálne môže obsahovať:
+```bash
    - `DATABASE_URL=sqlite:///./database.db`
    - `HISTORY_HOURS=24`
    - `APP_HOST=0.0.0.0`
    - `APP_PORT=5001`
    - `SIMULATOR_URL=http://127.0.0.1:5001/api/measurements`
-
+```
 3. Nainštalujte potrebné knižnice:
 
 ```bash
