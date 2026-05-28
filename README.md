@@ -128,7 +128,7 @@ Služby sú navrhnuté tak, aby sa po reštarte hardvéru alebo servera automati
 2. Spustite tunel nasmerovaný na váš lokálny port 5001:
 3. Z terminálu skopírujte vygenerovanú HTTPS adresu (napr. `https://random-subdomain.trycloudflare.com`).
    
-Poznamka: Adresa je momentalne: `https://introductory-journey-helped-jazz.trycloudflare.com` API JSON{`https://introductory-journey-helped-jazz.trycloudflare.com/api/history`} posledny GET {`https://introductory-journey-helped-jazz.trycloudflare.com/api/latest`}
+Poznamka: Adresa je momentalne: `https://journalists-weekly-serves-faculty.trycloudflare.com` API JSON{`https://journalists-weekly-serves-faculty.trycloudflare.com/api/history`} posledny GET {`https://journalists-weekly-serves-faculty.trycloudflare.com/api/latest`}
 
 Ak chcete začať s čistým štítom, premazať všetky staré merania a resetovať grafy, môžete to urobiť veľmi jednoducho jedným z týchto dvoch spôsobov:
 
