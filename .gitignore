@@ -1,0 +1,10 @@
+# Firmware secrets
+firmware/main/secrets.h
+
+# Python caches
+server/__pycache__/
+*.pyc
+
+# Local databases and environment files
+server/database.db
+server/.env

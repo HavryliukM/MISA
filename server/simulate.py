@@ -2,8 +2,7 @@ import requests
 import time
 import random
 import math
-
-URL = "http://127.0.0.1:5001/api/measurements"
+from config import SIMULATOR_URL
 
 print("Starting simulation... Sending data every 5 seconds.")
 
@@ -27,7 +26,7 @@ while True:
     }
 
     try:
-        response = requests.post(URL, json=payload)
+        response = requests.post(SIMULATOR_URL, json=payload)
         print(f"Sent {payload} - Status: {response.status_code}")
     except Exception as e:
         print(f"Error sending data: {e}")

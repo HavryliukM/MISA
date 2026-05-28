@@ -1,8 +1,8 @@
-from sqlalchemy import Column, Integer, Float, String, DateTime, create_engine
+from sqlalchemy import Column, Integer, Float, DateTime, create_engine
 from sqlalchemy.orm import declarative_base, sessionmaker
 from datetime import datetime
+from config import DATABASE_URL
 
-DATABASE_URL = "sqlite:///./database.db"
 engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()

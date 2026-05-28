@@ -1,14 +1,7 @@
 #include <WiFi.h>
 #include <HTTPClient.h>
 #include <DHT.h>
-
-// --- Nastavenia siete ---
-const char* ssid = "soFISHticated";
-const char* password = "17.01-24.02";
-
-// --- Nastavenia servera ---
-// Adresa backendu (buď lokálna IP, alebo verejná ngrok adresa)
-const char* serverUrl = "https://disc-bob-casinos-academic.trycloudflare.com/api/measurements"; 
+#include "secrets.h"
 
 // --- Nastavenia senzorov ---
 #define DHTPIN 4     // Zvoľte vhodný GPIO pin na ESP32 (napr. GPIO4)

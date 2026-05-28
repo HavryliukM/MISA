@@ -122,7 +122,7 @@ const chart = new Chart(document.getElementById('main-chart').getContext('2d'), 
 
 // ── Updaters ─────────────────────────────────────────────────────────────────
 function updateChart(data) {
-    chart.data.labels           = data.map(d => d.timestamp.split(' ')[1]);
+    chart.data.labels           = data.map(d => d.timestamp);
     chart.data.datasets[0].data = data.map(d => d.temp);
     chart.data.datasets[1].data = data.map(d => d.hum);
     chart.update('none');

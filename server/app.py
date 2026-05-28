@@ -3,7 +3,9 @@ from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
+from datetime import datetime, timedelta
 from models import SessionLocal, SensorReading
+from config import HISTORY_HOURS, APP_HOST, APP_PORT
 
 app = FastAPI()
 app.mount("/static", StaticFiles(directory="static"), name="static")
@@ -20,11 +22,16 @@ async def index(request: Request):
 @app.get("/api/history")
 async def get_history():
     db = SessionLocal()
-    readings = db.query(SensorReading).order_by(SensorReading.timestamp.desc()).limit(50).all()
+    cutoff = datetime.utcnow() - timedelta(hours=HISTORY_HOURS)
+    readings = (
+        db.query(SensorReading)
+        .filter(SensorReading.timestamp >= cutoff)
+        .order_by(SensorReading.timestamp.asc())
+        .all()
+    )
     data = [r.to_dict() for r in readings]
     db.close()
-    # Reverse so the oldest of the last 50 is first for charting
-    return JSONResponse(content=list(reversed(data)))
+    return JSONResponse(content=data)
 
 @app.get("/api/latest")
 async def get_latest():
@@ -54,4 +61,4 @@ async def add_measurement(measurement: MeasurementIn):
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=5001, log_level="info")
+    uvicorn.run(app, host=APP_HOST, port=APP_PORT, log_level="info")
