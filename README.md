@@ -41,6 +41,8 @@ Projekt je rozdelený na tri logické celky: firmvér, server a dokumentáciu.
 3. **Príslušenstvo:** Prepojovacie vodiče (F-to-F), Micro-USB kábel pre napájanie a programovanie.
 4. **Komunikačný protokol (HTTP REST):** Keďže systém odosiela dáta jednosmerne a periodicky z mikrokontroléra na server, použitie klasického HTTP POST dopytu s JSON obsahom je najjednoduchšie, najstabilnejšie a bez nutnosti spravovať dodatočný MQTT broker či riešiť problémy s udržiavaním otvorených WebSocket spojení.
 5. **Vizualizačná technológia (FastAPI + HTML/JS Dashboard):** Python framework FastAPI poskytuje extrémnu rýchlosť pri tvorbe REST API. Na strane klienta je použitý čistý HTML/JS s knižnicami Chart.js (pre vykreslenie historického grafu) a vizuálne zobrazenie hodnôt je riešené pomocou vlastných SVG ukazovateľov a grafickej vrstvy v JavaScripte, bez použitia externého gauge frameworku. Dáta sa aktualizujú pravidelne pomocou `fetch()`.
+6. **Programovacie prostredie (Arduino IDE):** Pre vývoj firmvéru bolo zvolené prostredie Arduino IDE kvôli jeho širokej komunite, bohatej podpore knižníc pre ESP32 a DHT snímače, a nízkej komplexnosti pri konfigurácii toolchainu. Umožňuje rýchly prototyping, jednoduchý prenos kódu na mikrokontrolér a obsahuje integrovaný sériový monitor pre rýchle a efektívne ladenie za behu.
+7. **Absencia šifrovania na lokálnej sieti (HTTP vs HTTPS):** Prenos dát z ESP32 na backend prebieha prostredníctvom nešifrovaného protokolu HTTP. Táto absencia SSL/TLS zabezpečenia na lokálnej úrovni je plne zdôvodnená: šifrovanie HTTPS prináša pre 32-bitové mikrokontroléry nezanedbateľnú výpočtovú a časovú réžiu pri nadväzovaní spojenia (TLS handshake, asymetrická kryptografia, správa certifikátov), čo by zbytočne spomaľovalo cyklus merania a odosielania a zvyšovalo energetickú náročnosť hardvéru. Navyše, komunikácia medzi snímačom a backendom prebieha výhradne v rámci zabezpečeného lokálneho intranetového prostredia. Zabezpečený prístup pre koncového používateká z internetu k webovému dashboardu je následne plne vyriešený a šifrovaný pomocou HTTPS prostredníctvom technológie Cloudflare Tunnel.
 
 Mikrokontrolér odosiela dáta vo formáte štandardného JSON objektu pomocou POST požiadavky na endpoint `/api/measurements`. Časová pečiatka (`timestamp`) sa z dôvodu presnosti a nezávislosti na RTC module v ESP32 generuje až priamo na strane servera pri uložení do databázy.
 
@@ -91,6 +93,30 @@ python simulate.py
 
 ```
 
+## Automatické spúšťanie služieb po reštarte (Autostart)
+
+Služby sú navrhnuté tak, aby sa po reštarte hardvéru alebo servera automaticky obnovili:
+1. **Mikrokontrolér (ESP32):** Obsahuje v kóde (`main.ino`) automatickú reconnect slučku. Ak dôjde k výpadku napájania alebo WiFi signálu, po reštarte sa ESP32 automaticky pripojí a obnoví meranie a prenos dát bez potreby akéhokoľvek zásahu.
+2. **Backend Server (FastAPI):**
+   - **Na systémoch Windows:** Spustenie po štarte systému je realizované pomocou jednoduchého PowerShell skriptu zaregistrovaného v Plánovači úloh (Task Scheduler). Úloha sa spúšťa s najvyššími oprávneniami na pozadí pri prihlásení používateľa:
+     `Start-Process -FilePath "python" -ArgumentList "app.py" -WorkingDirectory "C:\Projects\MM\server" -WindowStyle Hidden`
+   - **Na systémoch Linux (systemd):** Produkčný server sa spúšťa ako systémová služba. Konfigurácia `/etc/systemd/system/misa-server.service`:
+     ```ini
+     [Unit]
+     Description=MISA FastAPI Backend Server
+     After=network.target
+
+     [Service]
+     User=nobody
+     WorkingDirectory=/home/user/MM/server
+     ExecStart=/usr/bin/python app.py
+     Restart=always
+
+     [Install]
+     WantedBy=multi-user.target
+     ```
+     Služba sa aktivuje pomocou príkazu `systemctl enable --now misa-server.service`.
+
 ## Ako sprístupniť Dashboard Verejne
 
 ### Cloudflare Tunnel
@@ -124,7 +150,7 @@ Pokiaľ máte spustený alebo vypnutý server, môžete spustiť tento príkaz v
 6. Pripojte ESP32 cez USB, vyberte správny COM port a zvoľte dosku **"Node32s"**.
 7. Kliknite na tlačidlo **Upload**.
 
-Poznámka: reálne údaje si udržujte v súbore `firmware/main/secrets.h`, ktorý je ignorovaný Gitom. Pre nový stroj môžete skopírovať `firmware/main/secrets.example.h` na `firmware/main/secrets.h` a doplniť vlastné hodnoty.
+Poznámka: do main.ino upravte WiFi a IP adresu servera.
 
 ## Štruktúra Projektu
 ```text
@@ -134,7 +160,6 @@ MISA/
 ├── firmware/
 │   └── main/
 │       └── main.ino        # C++ kód pre Node32s (ESP32) a DHT11
-        └── sectets.example.h   # Priklad na hesla a porty, treba spraviť kópiu a prepísať na vlastné údaje
 ├── server/
 │   ├── static/             # Statické súbory pre webový dashboard
 │   │   ├── css/
