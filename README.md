@@ -6,30 +6,31 @@ Tento projekt predstavuje ucelený systém pre vzdialené monitorovanie fyzikál
 
 ```mermaid
 graph TD
-    Sensor[DHT11 - Senzor teploty a vlhkosti] -->|1-Wire digitálny signál| MCU[Node32s]
-    MCU -->|WiFi / HTTP POST JSON| Server[FastAPI Backend Server]
-    Server -->|Ukladanie dát| DB[(SQLite Databáza)]
-    Client[Webový Prehliadač / Dashboard] <-->|HTTP GET / AJAX Fetch| Server
-```
+    Senzor[Senzor DHT11] -->|Teplota a vlhkosť| ESP32[Mikrokontrolér ESP32]
+    ESP32 -->|Odosielanie dát cez WiFi| Server[FastAPI Server]
+    Server -->|Uloženie do databázy| Databaza[(SQLite Databáza)]
+    Prehliadac[Webový Dashboard] <-->|Zobrazenie grafov a hodnôt| Server
 
+```
 ---
 
 ## Štruktúra Projektu
 
 Projekt je rozdelený na tri logické celky: firmvér, server a dokumentáciu.
 
----
 
 ### 1. Hardvér a Mikrokontrolér (firmware)
 * **Arduino WiFi.h & HTTPClient.h** – pre sieťovú komunikáciu a odosielanie JSON dát cez HTTP POST.
 * **Adafruit DHT Sensor Library** – na čítanie hodnôt teploty a vlhkosti zo senzora DHT11.
 * **Adafruit Unified Sensor** – podporná knižnica pre správne fungovanie DHT senzorov.
+  
 ### 2. Backend a Databáza (server)
 * **FastAPI** – moderný, rýchly webový framework pre Python.
 * **Uvicorn** – rýchly ASGI webový server pre beh FastAPI aplikácie.
 * **SQLAlchemy** – moderné Python ORM na komunikáciu s SQLite databázou bez písania SQL dopytov.
 * **Pydantic** – pre dátovú validáciu prichádzajúcich HTTP JSON dát z Node32s.
 * **Jinja2** – šablónovací systém pre renderovanie HTML dashboardu.
+  
 ### 3. Frontend a Vizualizácia (dashboard)
 * **Chart.js (v4.4.0)** – interaktívny JavaScript graf zobrazujúci historický vývoj teplôt a vlhkosti na dvoch nezávislých Y osiach.
 * **Google Fonts (Outfit)** – moderná a elegantná bezpätková typografia.
@@ -37,12 +38,17 @@ Projekt je rozdelený na tri logické celky: firmvér, server a dokumentáciu.
 ---
 ## Projekt obsahuje
 1. **Mikrokontrolér:** Node32s (chip ESP32-D0WD-V3): Zvolená bola platforma ESP32 (konkrétne doska Node32s) pre jej natívnu podporu 2.4GHz WiFi sieté, čo napĺňa primárnu požiadavku R2 (bezdrôtový prenos). Na rozdiel od základných dosiek rodiny Arduino (Uno/Nano) nevyžaduje prídavné moduly pre sieťovú konektivitu a má dostatok výpočtového výkonu. Firmvér na ESP32 po výpadku WiFi automaticky opakovane hľadá sieť a pokúša sa znovu pripojiť, čím zabezpečuje obnovu komunikácie bez zásahu používateľa.
-2. **Snímač:** DHT11 (Kategória A - Digitálny snímač teploty a vlhkosti, 3-pinový modul): Komunikuje vlastným jednovodičovým digitálnym protokolom (spĺňa Kategóriu A) a vyžaduje iba jeden dátový pin (GPIO 4) na mikrokontroléri. 3-pinový modul má integrovaný pull-up rezistor, čo zjednodušuje zapojenie.
-3. **Príslušenstvo:** Prepojovacie vodiče (F-to-F), Micro-USB kábel pre napájanie a programovanie.
-4. **Komunikačný protokol (HTTP REST):** Keďže systém odosiela dáta jednosmerne a periodicky z mikrokontroléra na server, použitie klasického HTTP POST dopytu s JSON obsahom je najjednoduchšie, najstabilnejšie a bez nutnosti spravovať dodatočný MQTT broker či riešiť problémy s udržiavaním otvorených WebSocket spojení.
-5. **Vizualizačná technológia (FastAPI + HTML/JS Dashboard):** Python framework FastAPI poskytuje extrémnu rýchlosť pri tvorbe REST API. Na strane klienta je použitý čistý HTML/JS s knižnicami Chart.js (pre vykreslenie historického grafu) a vizuálne zobrazenie hodnôt je riešené pomocou vlastných SVG ukazovateľov a grafickej vrstvy v JavaScripte, bez použitia externého gauge frameworku. Dáta sa aktualizujú pravidelne pomocou `fetch()`.
-6. **Programovacie prostredie (Arduino IDE):** Pre vývoj firmvéru bolo zvolené prostredie Arduino IDE kvôli jeho širokej komunite, bohatej podpore knižníc pre ESP32 a DHT snímače, a nízkej komplexnosti pri konfigurácii toolchainu. Umožňuje rýchly prototyping, jednoduchý prenos kódu na mikrokontrolér a obsahuje integrovaný sériový monitor pre rýchle a efektívne ladenie za behu.
-7. **Absencia šifrovania na lokálnej sieti (HTTP vs HTTPS):** Prenos dát z ESP32 na backend prebieha prostredníctvom nešifrovaného protokolu HTTP. Táto absencia SSL/TLS zabezpečenia na lokálnej úrovni je plne zdôvodnená: šifrovanie HTTPS prináša pre 32-bitové mikrokontroléry nezanedbateľnú výpočtovú a časovú réžiu pri nadväzovaní spojenia (TLS handshake, asymetrická kryptografia, správa certifikátov), čo by zbytočne spomaľovalo cyklus merania a odosielania a zvyšovalo energetickú náročnosť hardvéru. Navyše, komunikácia medzi snímačom a backendom prebieha výhradne v rámci zabezpečeného lokálneho intranetového prostredia. Zabezpečený prístup pre koncového používateká z internetu k webovému dashboardu je následne plne vyriešený a šifrovaný pomocou HTTPS prostredníctvom technológie Cloudflare Tunnel.
+   
+3. **Snímač:** DHT11 (Kategória A - Digitálny snímač teploty a vlhkosti, 3-pinový modul): Komunikuje vlastným jednovodičovým digitálnym protokolom (spĺňa Kategóriu A) a vyžaduje iba jeden dátový pin (GPIO 4) na mikrokontroléri. 3-pinový modul má integrovaný pull-up rezistor, čo zjednodušuje zapojenie.
+4. **Príslušenstvo:** Prepojovacie vodiče (F-to-F), Micro-USB kábel pre napájanie a programovanie.
+   
+5. **Komunikačný protokol (HTTP REST):** Keďže systém odosiela dáta jednosmerne a periodicky z mikrokontroléra na server, použitie klasického HTTP POST dopytu s JSON obsahom je najjednoduchšie, najstabilnejšie a bez nutnosti spravovať dodatočný MQTT broker či riešiť problémy s udržiavaním otvorených WebSocket spojení.
+   
+7. **Vizualizačná technológia (FastAPI + HTML/JS Dashboard):** Python framework FastAPI poskytuje extrémnu rýchlosť pri tvorbe REST API. Na strane klienta je použitý čistý HTML/JS s knižnicami Chart.js (pre vykreslenie historického grafu) a vizuálne zobrazenie hodnôt je riešené pomocou vlastných SVG ukazovateľov a grafickej vrstvy v JavaScripte, bez použitia externého gauge frameworku. Dáta sa aktualizujú pravidelne pomocou `fetch()`.
+   
+8. **Programovacie prostredie (Arduino IDE):** Pre vývoj firmvéru bolo zvolené prostredie Arduino IDE kvôli jeho širokej komunite, bohatej podpore knižníc pre ESP32 a DHT snímače, a nízkej komplexnosti pri konfigurácii toolchainu. Umožňuje rýchly prototyping, jednoduchý prenos kódu na mikrokontrolér a obsahuje integrovaný sériový monitor pre rýchle a efektívne ladenie za behu.
+   
+9. **Absencia šifrovania na lokálnej sieti (HTTP vs HTTPS):** Prenos dát z ESP32 na backend prebieha prostredníctvom nešifrovaného protokolu HTTP. Táto absencia SSL/TLS zabezpečenia na lokálnej úrovni je plne zdôvodnená: šifrovanie HTTPS prináša pre 32-bitové mikrokontroléry nezanedbateľnú výpočtovú a časovú réžiu pri nadväzovaní spojenia (TLS handshake, asymetrická kryptografia, správa certifikátov), čo by zbytočne spomaľovalo cyklus merania a odosielania a zvyšovalo energetickú náročnosť hardvéru. Navyše, komunikácia medzi snímačom a backendom prebieha výhradne v rámci zabezpečeného lokálneho intranetového prostredia. Zabezpečený prístup pre koncového používateká z internetu k webovému dashboardu je následne plne vyriešený a šifrovaný pomocou HTTPS prostredníctvom technológie Cloudflare Tunnel.
 
 Mikrokontrolér odosiela dáta vo formáte štandardného JSON objektu pomocou POST požiadavky na endpoint `/api/measurements`. Časová pečiatka (`timestamp`) sa z dôvodu presnosti a nezávislosti na RTC module v ESP32 generuje až priamo na strane servera pri uložení do databázy.
 
@@ -81,7 +87,6 @@ pip install fastapi uvicorn sqlalchemy pydantic jinja2 requests
 python app.py
 
 ```
-
 4. Webový dashboard bude dostupný na adrese `http://127.0.0.1:5001` (alebo z lokálnej sieti na `http://<IP-ADRESA-SERVERA>:5001`).
 
 Ak nemáte pripojené fyzické ESP32, môžete spustiť priložený simulátor, ktorý generuje realistické zmeny teploty a vlhkosti a posiela ich na lokálny server každých 5 sekúnd:
@@ -92,7 +97,6 @@ Ak nemáte pripojené fyzické ESP32, môžete spustiť priložený simulátor, 
 python simulate.py
 
 ```
-
 ## Automatické spúšťanie služieb po reštarte (Autostart)
 
 Služby sú navrhnuté tak, aby sa po reštarte hardvéru alebo servera automaticky obnovili:
@@ -123,9 +127,8 @@ Služby sú navrhnuté tak, aby sa po reštarte hardvéru alebo servera automati
 
 2. Spustite tunel nasmerovaný na váš lokálny port 5001:
 3. Z terminálu skopírujte vygenerovanú HTTPS adresu (napr. `https://random-subdomain.trycloudflare.com`).
-
-Poznamka: Dashboard bol počas testovania úspešne sprístupnený aj verejne cez Cloudflare Tunnel, takže prístup z externého prostredia bol overený v praxi.
----
+   
+Poznamka: Adresa je momentalne: `https://introductory-journey-helped-jazz.trycloudflare.com` API JSON{`https://introductory-journey-helped-jazz.trycloudflare.com/api/history`} posledny GET {`https://introductory-journey-helped-jazz.trycloudflare.com/api/latest`}
 
 Ak chcete začať s čistým štítom, premazať všetky staré merania a resetovať grafy, môžete to urobiť veľmi jednoducho jedným z týchto dvoch spôsobov:
 
@@ -141,16 +144,13 @@ Pokiaľ máte spustený alebo vypnutý server, môžete spustiť tento príkaz v
 
 1. Stiahnite a nainštalujte si [Arduino IDE](https://www.arduino.cc/en/software).
 2. Pridajte podporu pre ESP32 do správcu dosiek (Board Manager) vložením URL adresy od Espressif.
-3. Skopírujte `firmware/main/secrets.example.h` na `firmware/main/secrets.h` a doplňte vlastné WiFi údaje a adresu servera.
-4. Otvorte súbor `firmware/main/main.ino`.
-5. V správcovi knižníc (Library Manager) si nainštalujte nasledujúce knižnice:
+3. Otvorte súbor `firmware/main/main.ino`. a doplňte vlastné WiFi údaje a adresu servera.
+4. V správcovi knižníc (Library Manager) si nainštalujte nasledujúce knižnice:
    - `DHT sensor library` (od Adafruit)
    - `Adafruit Unified Sensor`
 
-6. Pripojte ESP32 cez USB, vyberte správny COM port a zvoľte dosku **"Node32s"**.
-7. Kliknite na tlačidlo **Upload**.
-
-Poznámka: do main.ino upravte WiFi a IP adresu servera.
+5. Pripojte ESP32 cez USB, vyberte správny COM port a zvoľte dosku **"Node32s"**.
+6. Kliknite na tlačidlo **Upload**.
 
 ## Štruktúra Projektu
 ```text
