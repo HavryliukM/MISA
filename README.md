@@ -145,8 +145,7 @@ Príklad adresy a jej možnosti: `https://journalists-weekly-serves-faculty.tryc
 ## Štruktúra Projektu
 ```text
 MISA/
-├── docs/                   # Obrázky, schémy
- zapojenia a diagramy
+├── docs/                   # Obrázky, schémy zapojenia a diagramy
 ├── firmware/
 │   └── main/
 │       └── main.ino        # C++ kód pre Node32s (ESP32) a DHT11
@@ -158,11 +157,19 @@ MISA/
 │   │       └── main.js     # Logika dashboardu: Chart.js, animované ciferníky a periodické dopyty
 │   ├── templates/
 │   │   └── index.html      # HTML šablóna pre hlavnú stránku dashboardu
+│   ├── .env                # Lokálny konfiguračný súbor (neodosiela sa na Git)
 │   ├── app.py              # FastAPI server (Python backend a REST API)
+│   ├── config.py           # Python modul na načítanie premenných prostredia a nastavení
 │   ├── database.db         # Lokálna SQLite databáza pre ukladanie meraní (generuje sa sama)
 │   ├── models.py           # ORM definícia tabuliek (SQLAlchemy modely)
 │   └── simulate.py         # Testovací simulátor odosielania dát na server
-└── README.md               # Táto dokumentácia
+├── .gitignore              # Definuje, ktoré súbory a priečinky má Git ignorovať
+├── hodnotenieMISA.md       # Hodnotiaca matica / checklist pre projekt (Markdown)
+├── hodnotenieMISA.pdf      # Hodnotiaca matica v PDF formáte
+├── PLAN-markdown.md        # Pôvodný implementačný plán v Markdown formáte
+├── PLAN.pdf                # Pôvodný implementačný plán v PDF formáte
+├── SEBEHODNOTENIE.md       # Vyplnené sebahodnotenie študenta k obhajobe
+└── README.md               # Hlavná dokumentácia projektu (tento súbor)
 ```
 
 ---
