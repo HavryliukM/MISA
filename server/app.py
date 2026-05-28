@@ -8,19 +8,23 @@ from models import SessionLocal, SensorReading
 from config import HISTORY_HOURS, APP_HOST, APP_PORT
 
 app = FastAPI()
+# Statické súbory a šablóny sú oddelené, aby backend vracal aj UI.
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
 
+# Telo POST requestu s jedným meraním zo senzora alebo simulátora.
 class MeasurementIn(BaseModel):
     temp: float
     hum: float
 
 @app.get("/", response_class=HTMLResponse)
 async def index(request: Request):
+    # Úvodná stránka dashboardu.
     return templates.TemplateResponse(request, "index.html", {"request": request})
 
 @app.get("/api/history")
 async def get_history():
+    # Vrátime merania iba za posledných HISTORY_HOURS hodín.
     db = SessionLocal()
     cutoff = datetime.utcnow() - timedelta(hours=HISTORY_HOURS)
     readings = (
@@ -35,6 +39,7 @@ async def get_history():
 
 @app.get("/api/latest")
 async def get_latest():
+    # Posledný uložený záznam slúži pre rýchle zobrazenie aktuálnych hodnôt.
     db = SessionLocal()
     reading = db.query(SensorReading).order_by(SensorReading.timestamp.desc()).first()
     data = reading.to_dict() if reading else None
@@ -43,13 +48,14 @@ async def get_latest():
 
 @app.post("/api/measurements")
 async def add_measurement(measurement: MeasurementIn):
-    # Reject corrupted sensor readings (e.g. DHT sensor failures resulting in exactly 0.0 or near-zero readings)
+    # Odmietneme zjavne chybné hodnoty zo senzora.
     if measurement.temp <= 0.5 or measurement.hum <= 1.0:
         return JSONResponse(
             status_code=400,
             content={"status": "error", "message": "Invalid or corrupted sensor reading"}
         )
     
+    # Platné meranie uložíme do databázy a pošleme späť potvrdenie.
     db = SessionLocal()
     new_reading = SensorReading(temp=measurement.temp, hum=measurement.hum)
     db.add(new_reading)
@@ -60,5 +66,6 @@ async def add_measurement(measurement: MeasurementIn):
     return JSONResponse(content={"status": "success", "data": data})
 
 if __name__ == "__main__":
+    # Lokálne spustenie backendu priamo z tohto súboru.
     import uvicorn
     uvicorn.run(app, host=APP_HOST, port=APP_PORT, log_level="info")

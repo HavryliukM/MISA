@@ -4,22 +4,24 @@ import random
 import math
 from config import SIMULATOR_URL
 
+# Testovací skript posiela falošné merania do backendu každých 5 sekúnd.
 print("Starting simulation... Sending data every 5 seconds.")
 
 step = 0
 while True:
-    # Simulate realistic temperature variations using sine wave + noise
+    # Teplota sa mení plynulo ako malá sínusová vlna s náhodným šumom.
     base_temp = 22.0
     temp_variation = math.sin(step * 0.1) * 3  # +/- 3 degrees
     noise_temp = random.uniform(-0.5, 0.5)
     temp = base_temp + temp_variation + noise_temp
 
-    # Simulate humidity variations
+    # Vlhkosť meníme podobne, ale s inou periódou a väčším rozsahom.
     base_hum = 45.0
     hum_variation = math.cos(step * 0.1) * 10 # +/- 10 percent
     noise_hum = random.uniform(-2.0, 2.0)
     hum = base_hum + hum_variation + noise_hum
 
+    # Payload zodpovedá formátu, ktorý očakáva API endpoint.
     payload = {
         "temp": round(temp, 1),
         "hum": round(hum, 1)

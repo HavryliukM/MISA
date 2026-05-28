@@ -34,7 +34,7 @@ body {
     gap: 1.25rem;
 }
 
-/* ── HEADER ─────────────────────────────────── */
+/* Horná lišta */
 header {
     display: flex;
     align-items: center;
@@ -86,14 +86,14 @@ header h1 {
     50%      { transform: scale(1.5); opacity: 0.5; }
 }
 
-/* ── TOP ROW ─────────────────────────────────── */
+/* Horný blok s kartami */
 .top-row {
     display: grid;
     grid-template-columns: 1fr 1fr 1fr;
     gap: 1.25rem;
 }
 
-/* ── GAUGE CARD ──────────────────────────────── */
+/* Karta s kruhovým ukazovateľom */
 .gauge-card {
     background: var(--card-bg);
     backdrop-filter: var(--blur);
@@ -150,7 +150,7 @@ header h1 {
 .gc-badge--temp { background: rgba(249,115,22,.15); color: #fb923c; }
 .gc-badge--hum  { background: rgba(56,189,248,.15);  color: #38bdf8; }
 
-/* ── INFO CARD ───────────────────────────────── */
+/* Informačná karta */
 .info-card {
     background: var(--card-bg);
     backdrop-filter: var(--blur);
@@ -195,7 +195,7 @@ header h1 {
     text-align: right;
 }
 
-/* ── CARD (chart / table) ────────────────────── */
+/* Spoločný štýl pre graf a tabuľku */
 .card {
     background: var(--card-bg);
     backdrop-filter: var(--blur);
@@ -215,10 +215,10 @@ header h1 {
     margin-bottom: 1.25rem;
 }
 
-/* ── CHART ───────────────────────────────────── */
+/* Oblasť grafu */
 .chart-wrap { position: relative; height: 300px; }
 
-/* ── TABLE ───────────────────────────────────── */
+/* Tabuľka meraní */
 .table-wrap {
     max-height: 280px;
     overflow-y: auto;
@@ -254,7 +254,7 @@ tr:hover td { background: rgba(255,255,255,0.025); }
 td:nth-child(2) { color: var(--temp); font-weight: 500; }
 td:nth-child(3) { color: var(--hum);  font-weight: 500; }
 
-/* ── RESPONSIVE ──────────────────────────────── */
+/* Responzívne rozloženie */
 @media (max-width: 960px) {
     .top-row { grid-template-columns: 1fr 1fr; }
     .info-card { grid-column: 1 / -1; flex-direction: row; flex-wrap: wrap; gap: 0.5rem; padding: 1rem 1.5rem; }

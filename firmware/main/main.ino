@@ -3,9 +3,9 @@
 #include <DHT.h>
 #include "secrets.h"
 
-// --- Nastavenia senzorov ---
-#define DHTPIN 4     // Zvoľte vhodný GPIO pin na ESP32 (napr. GPIO4)
-#define DHTTYPE DHT11   // Zmena na DHT11 na základe hardvéru používateľa
+// --- Nastavenia senzora ---
+#define DHTPIN 4     // GPIO pin, na ktorom je pripojený DHT senzor.
+#define DHTTYPE DHT11   // Použitý typ senzora podľa zapojenia.
 
 // --- Nastavenia merania ---
 unsigned long previousMillis = 0;
@@ -17,10 +17,10 @@ void setup() {
   Serial.begin(115200);
   delay(1000);
   
-  // Inicializácia senzora
+  // Spustíme senzor pred prvým čítaním.
   dht.begin();
   
-  // Pripojenie na WiFi
+  // Pripojíme sa na WiFi sieť z údajov v secrets.h.
   WiFi.begin(ssid, password);
   Serial.print("Pripajanie na WiFi ");
   Serial.print(ssid);
@@ -39,11 +39,11 @@ void setup() {
 void loop() {
   unsigned long currentMillis = millis();
 
-  // Ak uplynul nastavený čas a sme pripojení na WiFi
+  // Meranie a odoslanie spustíme v nastavenom intervale.
   if (currentMillis - previousMillis >= interval) {
     previousMillis = currentMillis;
 
-    // Ak vypadlo spojenie, skúsime sa znova pripojiť
+    // Ak WiFi spadne, pokúsime sa pripojiť znova.
     if (WiFi.status() != WL_CONNECTED) {
       Serial.println("WiFi odpojene. Pripajanie znova...");
       WiFi.disconnect();
@@ -51,13 +51,13 @@ void loop() {
       return;
     }
 
-    // Čítanie zo senzora
+    // Načítame aktuálnu teplotu a vlhkosť.
     float h = dht.readHumidity();
     float t = dht.readTemperature();
 
-    // Skontrolujeme, či sme prečítali platné dáta
+    // Pri chybe čítania nepokračujeme v odosielaní.
     if (isnan(h) || isnan(t)) {
-      Serial.println("Chyba citania z DHT senzora!");
+      Serial.println("Chyba citania z DHT senzora");
       return;
     }
 
@@ -67,11 +67,10 @@ void loop() {
     Serial.print(h);
     Serial.println(" %");
 
-    // Vytvorenie JSON payloadu
-    // Uvedte escapeované úvodzovky
+    // Dáta pošleme ako JSON text.
     String jsonPayload = "{\"temp\":" + String(t) + ",\"hum\":" + String(h) + "}";
 
-    // Odoslanie HTTP POST požiadavky
+    // Odoslanie HTTP POST požiadavky na backend.
     HTTPClient http;
     http.begin(serverUrl);
     http.addHeader("Content-Type", "application/json");
@@ -88,6 +87,6 @@ void loop() {
       Serial.println(httpResponseCode);
     }
 
-    http.end(); // Uvoľnenie prostriedkov
+    http.end(); // Uvoľníme sieťové prostriedky.
   }
 }

@@ -2,18 +2,18 @@
 
 const API_HISTORY = '/api/history';
 
-// DOM refs
+// Referencie na prvky v UI.
 const statusDot  = document.getElementById('status-dot');
 const statusText = document.getElementById('status-text');
 const lastUpdate = document.getElementById('last-update');
 const histBody   = document.getElementById('history-body');
 
-// ── SVG Arc Gauge ────────────────────────────────────────────────────────────
-// 270° arc on circle r=80 → arc length ≈ 377, total circumference ≈ 503
+// Parametre kruhového ukazovateľa pre SVG arc.
 const ARC = 377;
 const CIRC = 503;
 
 function setGauge(arcId, valId, badgeId, value, min, max, unit) {
+    // Prepočítame hodnotu na percento a nastavíme dĺžku oblúka.
     const pct    = Math.max(0, Math.min(1, (value - min) / (max - min)));
     const filled = ARC * pct;
     const gap    = CIRC - filled;
@@ -22,7 +22,7 @@ function setGauge(arcId, valId, badgeId, value, min, max, unit) {
     document.getElementById(badgeId).textContent = `${value.toFixed(1)} ${unit}`;
 }
 
-// ── Chart.js (dual Y axes) ───────────────────────────────────────────────────
+// Graf zobrazuje teplotu a vlhkosť na dvoch osiach.
 const chart = new Chart(document.getElementById('main-chart').getContext('2d'), {
     type: 'line',
     data: {
@@ -120,7 +120,7 @@ const chart = new Chart(document.getElementById('main-chart').getContext('2d'), 
     },
 });
 
-// ── Updaters ─────────────────────────────────────────────────────────────────
+// Pomocné funkcie na aktualizáciu dashboardu.
 function updateChart(data) {
     chart.data.labels           = data.map(d => d.timestamp);
     chart.data.datasets[0].data = data.map(d => d.temp);
@@ -129,6 +129,7 @@ function updateChart(data) {
 }
 
 function updateTable(data) {
+    // Tabuľku plníme od najnovšieho záznamu po najstarší.
     histBody.innerHTML = '';
     [...data].reverse().forEach(d => {
         const tr = histBody.insertRow(-1);
@@ -137,24 +138,26 @@ function updateTable(data) {
 }
 
 function updateGauges(d) {
+    // Aktuálne hodnoty zobrazíme v kruhových ukazovateľoch aj v info časti.
     setGauge('temp-arc', 'temp-val', 'temp-badge', d.temp, 0,   50,  '°C');
     setGauge('hum-arc',  'hum-val',  'hum-badge',  d.hum,  0,  100,  '%');
     lastUpdate.textContent = d.timestamp;
 }
 
 function setStatus(ok) {
+    // Stav API ukazujeme farebnou bodkou a textom.
     statusDot.className   = ok ? 'dot dot--online' : 'dot dot--offline';
     statusText.textContent = ok ? 'Pripojené — Živé dáta' : 'Odpojené (Chyba API)';
 }
 
-// ── Fetch ─────────────────────────────────────────────────────────────────────
+// Načítanie dát z backendu a zápis do UI.
 async function fetchAll() {
     try {
         const res  = await fetch(API_HISTORY);
         if (!res.ok) throw new Error();
         const data = await res.json();
         
-        // Filter out any corrupted entries (e.g. DHT failures resulting in zero/near-zero values)
+        // Odfiltrujeme chybné záznamy s nulovými alebo podozrivo nízkymi hodnotami.
         const cleanData = data.filter(d => d.temp > 0.5 && d.hum > 1.0);
         
         if (cleanData.length > 0) {

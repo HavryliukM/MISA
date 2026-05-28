@@ -12,7 +12,7 @@
 <body>
 <div class="app">
 
-    <!-- HEADER -->
+    <!-- Horná lišta s názvom a stavom pripojenia -->
     <header>
         <div>
             <h1>MISA &mdash; Monitorovanie Prostredia</h1>
@@ -24,10 +24,10 @@
         </div>
     </header>
 
-    <!-- TOP ROW: Gauges + Info -->
+    <!-- Horný blok s ukazovateľmi a systémovými informáciami -->
     <div class="top-row">
 
-        <!-- Temperature Gauge -->
+        <!-- Ukazovateľ teploty -->
         <div class="gauge-card gauge-card--temp">
             <div class="gc-label">Teplota</div>
             <div class="gc-svg-wrap">
@@ -42,23 +42,23 @@
                             <feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>
                         </filter>
                     </defs>
-                    <!-- Track -->
+                    <!-- Podkladový oblúk -->
                     <circle cx="100" cy="100" r="80" fill="none"
                         stroke="rgba(255,255,255,0.07)" stroke-width="14" stroke-linecap="round"
                         stroke-dasharray="377 126" transform="rotate(135 100 100)"/>
-                    <!-- Fill arc -->
+                    <!-- Aktuálna hodnota -->
                     <circle id="temp-arc" cx="100" cy="100" r="80" fill="none"
                         stroke="url(#gTempGrad)" stroke-width="14" stroke-linecap="round"
                         stroke-dasharray="0 503" transform="rotate(135 100 100)"
                         filter="url(#glow-temp)"
                         style="transition: stroke-dasharray 0.9s cubic-bezier(0.4,0,0.2,1)"/>
-                    <!-- Center value -->
+                    <!-- Hodnota v strede -->
                     <text id="temp-val" x="100" y="95"
                         text-anchor="middle" font-family="Outfit,sans-serif"
                         font-size="46" font-weight="700" fill="#f1f5f9" letter-spacing="-2">--</text>
                     <text x="100" y="118" text-anchor="middle"
                         font-family="Outfit,sans-serif" font-size="15" font-weight="500" fill="#64748b">°C</text>
-                    <!-- Min / Max -->
+                    <!-- Minimum a maximum -->
                     <text x="26" y="166" text-anchor="middle"
                         font-family="Outfit,sans-serif" font-size="11" fill="#475569">0</text>
                     <text x="174" y="166" text-anchor="middle"
@@ -68,7 +68,7 @@
             <div class="gc-badge gc-badge--temp" id="temp-badge">---</div>
         </div>
 
-        <!-- Humidity Gauge -->
+        <!-- Ukazovateľ vlhkosti -->
         <div class="gauge-card gauge-card--hum">
             <div class="gc-label">Vlhkosť</div>
             <div class="gc-svg-wrap">
@@ -105,7 +105,7 @@
             <div class="gc-badge gc-badge--hum" id="hum-badge">---</div>
         </div>
 
-        <!-- Info Card -->
+        <!-- Informačná karta -->
         <div class="info-card">
             <div class="info-card-title">Informácie o systéme</div>
             <div class="info-list">
@@ -138,7 +138,7 @@
 
     </div>
 
-    <!-- CHART -->
+    <!-- Graf meraní -->
     <div class="card">
             <div class="card-title">Historický Vývoj (Posledných 24 hodín)</div>
         <div class="chart-wrap">
@@ -146,7 +146,7 @@
         </div>
     </div>
 
-    <!-- TABLE -->
+    <!-- Tabuľka hodnôt -->
     <div class="card">
         <div class="card-title">Tabuľka Hodnôt</div>
         <div class="table-wrap">
