@@ -129,10 +129,12 @@ Poznámka: reálne údaje si udržujte v súbore `firmware/main/secrets.h`, ktor
 ## Štruktúra Projektu
 ```text
 MISA/
-├── docs/                   # Obrázky, schémy zapojenia a diagramy
+├── docs/                   # Obrázky, schémy
+ zapojenia a diagramy
 ├── firmware/
 │   └── main/
 │       └── main.ino        # C++ kód pre Node32s (ESP32) a DHT11
+        └── sectets.example.h   # Priklad na hesla a porty, treba spraviť kópiu a prepísať na vlastné údaje
 ├── server/
 │   ├── static/             # Statické súbory pre webový dashboard
 │   │   ├── css/
