@@ -33,7 +33,12 @@ async def get_history():
         .order_by(SensorReading.timestamp.asc())
         .all()
     )
-    data = [r.to_dict() for r in readings]
+    now = datetime.utcnow()
+    data = []
+    for r in readings:
+        d = r.to_dict()
+        d["age_seconds"] = (now - r.timestamp).total_seconds()
+        data.append(d)
     db.close()
     return JSONResponse(content=data)
 
