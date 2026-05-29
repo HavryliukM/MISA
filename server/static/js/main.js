@@ -120,9 +120,22 @@ const chart = new Chart(document.getElementById('main-chart').getContext('2d'), 
     },
 });
 
+// Konverzia UTC času zo servera na lokálny čas prehliadača.
+function toLocalTime(utcString) {
+    const date = new Date(utcString.replace(' ', 'T') + 'Z');
+    const pad = n => String(n).padStart(2, '0');
+    const yyyy = date.getFullYear();
+    const mm = pad(date.getMonth() + 1);
+    const dd = pad(date.getDate());
+    const hh = pad(date.getHours());
+    const min = pad(date.getMinutes());
+    const ss = pad(date.getSeconds());
+    return `${yyyy}-${mm}-${dd} ${hh}:${min}:${ss}`;
+}
+
 // Pomocné funkcie na aktualizáciu dashboardu.
 function updateChart(data) {
-    chart.data.labels           = data.map(d => d.timestamp);
+    chart.data.labels           = data.map(d => toLocalTime(d.timestamp));
     chart.data.datasets[0].data = data.map(d => d.temp);
     chart.data.datasets[1].data = data.map(d => d.hum);
     chart.update('none');
@@ -133,7 +146,7 @@ function updateTable(data) {
     histBody.innerHTML = '';
     [...data].reverse().forEach(d => {
         const tr = histBody.insertRow(-1);
-        tr.innerHTML = `<td>${d.timestamp}</td><td>${d.temp.toFixed(1)}</td><td>${d.hum.toFixed(1)}</td>`;
+        tr.innerHTML = `<td>${toLocalTime(d.timestamp)}</td><td>${d.temp.toFixed(1)}</td><td>${d.hum.toFixed(1)}</td>`;
     });
 }
 
@@ -141,13 +154,31 @@ function updateGauges(d) {
     // Aktuálne hodnoty zobrazíme v kruhových ukazovateľoch aj v info časti.
     setGauge('temp-arc', 'temp-val', 'temp-badge', d.temp, 0,   50,  '°C');
     setGauge('hum-arc',  'hum-val',  'hum-badge',  d.hum,  0,  100,  '%');
-    lastUpdate.textContent = d.timestamp;
+    lastUpdate.textContent = toLocalTime(d.timestamp);
 }
 
-function setStatus(ok) {
-    // Stav API ukazujeme farebnou bodkou a textom.
-    statusDot.className   = ok ? 'dot dot--online' : 'dot dot--offline';
-    statusText.textContent = ok ? 'Pripojené — Živé dáta' : 'Odpojené (Chyba API)';
+function setStatus(ok, lastReading = null) {
+    // Stav API a pripojenia zariadenia ukazujeme farebnou bodkou a textom.
+    if (!ok) {
+        statusDot.className   = 'dot dot--offline';
+        statusText.textContent = 'Odpojené (Chyba API)';
+        return;
+    }
+
+    if (!lastReading) {
+        statusDot.className   = 'dot dot--offline';
+        statusText.textContent = 'Žiadne dáta';
+        return;
+    }
+
+    // Ak server nedostal dáta za posledných 15 sekúnd, zariadenie považujeme za neaktívne
+    if (lastReading.age_seconds > 15) {
+        statusDot.className   = 'dot dot--offline';
+        statusText.textContent = 'Zariadenie neaktívne';
+    } else {
+        statusDot.className   = 'dot dot--online';
+        statusText.textContent = 'Pripojené — Živé dáta';
+    }
 }
 
 // Načítanie dát z backendu a zápis do UI.
@@ -160,16 +191,18 @@ async function fetchAll() {
         // Odfiltrujeme chybné záznamy s nulovými alebo podozrivo nízkymi hodnotami.
         const cleanData = data.filter(d => d.temp > 0.5 && d.hum > 1.0);
         
+        let lastReading = null;
         if (cleanData.length > 0) {
-            updateGauges(cleanData[cleanData.length - 1]);
+            lastReading = cleanData[cleanData.length - 1];
+            updateGauges(lastReading);
             updateChart(cleanData);
             updateTable(cleanData);
         }
-        setStatus(true);
+        setStatus(true, lastReading);
     } catch {
         setStatus(false);
     }
 }
 
 fetchAll();
-setInterval(fetchAll, 30000);
+setInterval(fetchAll, 3000);
