@@ -4,8 +4,8 @@ import random
 import math
 from config import SIMULATOR_URL
 
-# Testovací skript posiela falošné merania do backendu každých 5 sekúnd.
-print("Starting simulation... Sending data every 5 seconds.")
+# Testovací skript posiela falošné merania do backendu každých 30 sekúnd.
+print("Starting simulation... Sending data every 30 seconds.")
 
 step = 0
 while True:
@@ -34,4 +34,4 @@ while True:
         print(f"Error sending data: {e}")
 
     step += 1
-    time.sleep(5)
+    time.sleep(30)
