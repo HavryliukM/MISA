@@ -3,10 +3,10 @@
 const API_HISTORY = '/api/history';
 
 // Referencie na prvky v UI.
-const statusDot  = document.getElementById('status-dot');
+const statusDot = document.getElementById('status-dot');
 const statusText = document.getElementById('status-text');
 const lastUpdate = document.getElementById('last-update');
-const histBody   = document.getElementById('history-body');
+const histBody = document.getElementById('history-body');
 
 // Parametre kruhového ukazovateľa pre SVG arc.
 const ARC = 377;
@@ -14,9 +14,9 @@ const CIRC = 503;
 
 function setGauge(arcId, valId, badgeId, value, min, max, unit) {
     // Prepočítame hodnotu na percento a nastavíme dĺžku oblúka.
-    const pct    = Math.max(0, Math.min(1, (value - min) / (max - min)));
+    const pct = Math.max(0, Math.min(1, (value - min) / (max - min)));
     const filled = ARC * pct;
-    const gap    = CIRC - filled;
+    const gap = CIRC - filled;
     document.getElementById(arcId).setAttribute('stroke-dasharray', `${filled.toFixed(1)} ${gap.toFixed(1)}`);
     document.getElementById(valId).textContent = value.toFixed(1);
     document.getElementById(badgeId).textContent = `${value.toFixed(1)} ${unit}`;
@@ -135,7 +135,7 @@ function toLocalTime(utcString) {
 
 // Pomocné funkcie na aktualizáciu dashboardu.
 function updateChart(data) {
-    chart.data.labels           = data.map(d => toLocalTime(d.timestamp));
+    chart.data.labels = data.map(d => toLocalTime(d.timestamp));
     chart.data.datasets[0].data = data.map(d => d.temp);
     chart.data.datasets[1].data = data.map(d => d.hum);
     chart.update('none');
@@ -152,31 +152,32 @@ function updateTable(data) {
 
 function updateGauges(d) {
     // Aktuálne hodnoty zobrazíme v kruhových ukazovateľoch aj v info časti.
-    setGauge('temp-arc', 'temp-val', 'temp-badge', d.temp, 0,   50,  '°C');
-    setGauge('hum-arc',  'hum-val',  'hum-badge',  d.hum,  0,  100,  '%');
+    setGauge('temp-arc', 'temp-val', 'temp-badge', d.temp, 0, 50, '°C');
+    setGauge('hum-arc', 'hum-val', 'hum-badge', d.hum, 0, 100, '%');
     lastUpdate.textContent = toLocalTime(d.timestamp);
 }
 
 function setStatus(ok, lastReading = null) {
     // Stav API a pripojenia zariadenia ukazujeme farebnou bodkou a textom.
     if (!ok) {
-        statusDot.className   = 'dot dot--offline';
+        statusDot.className = 'dot dot--offline';
         statusText.textContent = 'Odpojené (Chyba API)';
         return;
     }
 
     if (!lastReading) {
-        statusDot.className   = 'dot dot--offline';
+        statusDot.className = 'dot dot--offline';
         statusText.textContent = 'Žiadne dáta';
         return;
     }
 
-    // Ak server nedostal dáta za posledných 15 sekúnd, zariadenie považujeme za neaktívne
-    if (lastReading.age_seconds > 15) {
-        statusDot.className   = 'dot dot--offline';
+    // Ak server nedostal dáta za posledných 60 sekúnd (1 minútu), považujeme ho za neaktívne.
+    // Týmto predídeme falošným offline stavom, ak zariadenie posiela dáta každých 30 sekúnd.
+    if (lastReading.age_seconds > 60) {
+        statusDot.className = 'dot dot--offline';
         statusText.textContent = 'Zariadenie neaktívne';
     } else {
-        statusDot.className   = 'dot dot--online';
+        statusDot.className = 'dot dot--online';
         statusText.textContent = 'Pripojené — Živé dáta';
     }
 }
@@ -184,13 +185,13 @@ function setStatus(ok, lastReading = null) {
 // Načítanie dát z backendu a zápis do UI.
 async function fetchAll() {
     try {
-        const res  = await fetch(API_HISTORY);
+        const res = await fetch(API_HISTORY);
         if (!res.ok) throw new Error();
         const data = await res.json();
-        
+
         // Odfiltrujeme chybné záznamy s nulovými alebo podozrivo nízkymi hodnotami.
         const cleanData = data.filter(d => d.temp > 0.5 && d.hum > 1.0);
-        
+
         let lastReading = null;
         if (cleanData.length > 0) {
             lastReading = cleanData[cleanData.length - 1];
